@@ -1,22 +1,28 @@
 import useMatrixStore from "../store/useMatrixStore";
 
-export default function generateCArray() {
+export default function generateCArrayRGB() {
   const { rows, cols, frames } = useMatrixStore.getState();
+  const totalPixels = rows * cols;
 
-  let output = `const uint8_t frames[][${rows}] PROGMEM = {\n`;
+  let output = `const uint8_t frames[][${totalPixels}][3] PROGMEM = {\n`;
 
-  frames.forEach((frame, fi) => {
-    output += "  { ";
-    for (let r = 0; r < rows; r++) {
-      let byte = 0;
-      for (let c = 0; c < cols; c++) {
-        const index = r * cols + c;
-        if (frame[index] === 1) byte |= 1 << (7 - c);
-      }
-      output += `0x${byte.toString(16).padStart(2, "0")}`;
-      if (r < rows - 1) output += ", ";
+  frames.forEach((frame) => {
+    output += "  {\n";
+
+    for (let i = 0; i < totalPixels; i++) {
+      let color = frame[i] || "#000000";
+
+      const r = parseInt(color.substring(1, 3), 16);
+      const g = parseInt(color.substring(3, 5), 16);
+      const b = parseInt(color.substring(5, 7), 16);
+
+      output += `    { ${r}, ${g}, ${b} }`;
+
+      if (i < totalPixels - 1) output += ",";
+      output += "\n";
     }
-    output += " },\n";
+
+    output += "  },\n";
   });
 
   output += "};\n";
